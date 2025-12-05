@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To My Love</title>
+    <style>
+        /* --- 全局样式 --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+            background: #ffe6e6;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #4a4a4a;
+        }
+
+        #heart-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 主容器 */
+        .container {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            display: none;
+            animation: fadeIn 1s ease;
+        }
+
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffb3b3;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.8s;
+        }
+
+        .start-screen h1 {
+            color: white;
+            font-size: 2rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        .photo-frame {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            border: 5px solid #ff6b6b;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .content {
+            margin-bottom: 20px;
+        }
+
+        .timer {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+
+        .love-letter {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            min-height: 100px;
+            text-align: left;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        /* --- 按钮区域优化 --- */
+        .buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px; /* 增加间距，让两个按钮分开 */
+            position: relative;
+            height: 60px; /* 固定高度，防止按钮飞走时布局塌陷 */
+            width: 100%;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            outline: none;
+            white-space: nowrap; /* 防止文字换行 */
+            z-index: 100;
+        }
+
+        .btn-yes {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            /* 确保"我愿意"按钮在文档流中稳如泰山 */
+            position: relative; 
+        }
+
+        .btn-yes:active {
+            transform: scale(0.95);
+        }
+
+        /* 初始状态下，"再想想"按钮也是相对定位，与"我愿意"并排 */
+        .btn-no {
+            background: #e0e0e0;
+            color: #666;
+            position: relative; 
+            transition: top 0.2s ease, left 0.2s ease; /* 平滑移动 */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            .love-letter { font-size: 1rem; }
+            .btn { padding: 10px 20px; font-size: 1rem; }
+            .buttons { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop>
+        <!-- 【请修改这里】 替换音乐文件 -->
+        <source src="./bgm.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="start-screen" id="startScreen" onclick="startProposal()">
+        <h1>✨ 点击开启 ✨</h1>
+        <p style="color: white; margin-top: 10px; font-size: 0.8rem;">(戴上耳机体验更佳)</p>
+    </div>
+
+    <canvas id="heart-canvas"></canvas>
+
+    <div class="container" id="mainContainer">
+        <div class="photo-frame">
+            <!-- 【请修改这里】 替换照片 -->
+            <img src="./photo.jpg" alt="Photo" id="gf-photo">
+        </div>
+
+        <div class="content">
+            <div class="timer" id="timer">我们已经相爱了...</div>
+            <div class="love-letter" id="typewriter"></div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-yes" onclick="sheSaidYes()">我愿意 ❤</button>
+            <button class="btn btn-no" id="btnNo" onmouseover="moveButton()" ontouchstart="moveButton()">再想想</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 配置区域 【请修改这里】 ---
+        const config = {
+            startDate: "2024-04-10", 
+            loveLetter: `亲爱的婧婧：\n\n作为一个程序员，我习惯了用代码去解决问题。\n但遇到你之后，我发现爱是一个无法用逻辑闭环的死循环。\n\n如果有Bug，我愿用一辈子去Debug。\n如果内存溢出，那是因为装满了对你的喜欢。\n\n未来的日子，不管是此外还是彼端，\n我都想和你一起 commit 每一天的幸福。\n\n嫁给我好吗？`
+        };
+
+        // --- 逻辑代码 ---
+
+        function startProposal() {
+            const startScreen = document.getElementById('startScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            const bgm = document.getElementById('bgm');
+
+            bgm.play().catch(e => console.log("请添加背景音乐文件"));
+
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                mainContainer.style.display = 'block';
+                startTimer();
+                typeWriter(config.loveLetter, 'typewriter');
+            }, 800);
+        }
+
+        function startTimer() {
+            const timerElem = document.getElementById('timer');
+            const start = new Date(config.startDate).getTime();
+            setInterval(() => {
+                const now = new Date().getTime();
+                const distance = now - start;
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                timerElem.innerText = `相爱第 ${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`;
+            }, 1000);
+        }
+
+        function typeWriter(text, elementId, speed = 100) {
+            let i = 0;
+            const elem = document.getElementById(elementId);
+            elem.innerHTML = "";
+            function type() {
+                if (i < text.length) {
+                    elem.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+                    i++;
+                    let delay = speed;
+                    if (['，', '。', '！', '？', '\n'].includes(text.charAt(i-1))) delay += 200;
+                    setTimeout(type, delay);
+                }
+            }
+            type();
+        }
+
+        // 优化后的按钮移动逻辑
+        let isFirstMove = true; // 标记是否是第一次移动
+
+        function moveButton() {
+            const btn = document.getElementById('btnNo');
+            
+            // 第一次触发时，将定位模式改为 fixed，这样它就可以飞出 buttons 容器了
+            // 同时保留 buttons 容器的高度，保证"我愿意"按钮不动
+            if (isFirstMove) {
+                btn.style.position = 'fixed';
+                isFirstMove = false;
+            }
+
+            // 获取视口尺寸
+            const maxWidth = window.innerWidth - btn.offsetWidth - 20;
+            const maxHeight = window.innerHeight - btn.offsetHeight - 20;
+
+            // 生成随机坐标
+            const randomX = Math.random() * maxWidth;
+            const randomY = Math.random() * maxHeight;
+
+            // 应用新坐标
+            btn.style.left = randomX + 'px';
+            btn.style.top = randomY + 'px';
+        }
+
+        function sheSaidYes() {
+            alert("💖 既然答应了，那就不能反悔咯！(系统已自动截图存档) 💖");
+            document.querySelector('.love-letter').innerHTML = "<h3>🎉 She Said YES! 🎉</h3><br>代码编译成功，程序正式上线！<br>版本号：Forever v1.0";
+            document.getElementById('btnNo').style.display = 'none';
+            speedMultiplier = 5;
+        }
+
+        // --- Canvas 爱心雨 (保持不变) ---
+        const canvas = document.getElementById('heart-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let hearts = [];
+        let speedMultiplier = 1;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Heart {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height - height;
+                this.size = Math.random() * 15 + 5;
+                this.speed = Math.random() * 2 + 1;
+                this.color = `rgba(255, ${Math.random() * 100 + 100}, ${Math.random() * 100 + 100}, ${Math.random() * 0.5 + 0.1})`;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                let topCurveHeight = this.size * 0.3;
+                ctx.moveTo(this.x, this.y + topCurveHeight);
+                ctx.bezierCurveTo(this.x, this.y, this.x - this.size / 2, this.y, this.x - this.size / 2, this.y + topCurveHeight);
+                ctx.bezierCurveTo(this.x - this.size / 2, this.y + (this.size + topCurveHeight) / 2, this.x, this.y + (this.size + topCurveHeight) / 2 + this.size / 2, this.x, this.y + this.size);
+                ctx.bezierCurveTo(this.x, this.y + (this.size + topCurveHeight) / 2 + this.size / 2, this.x + this.size / 2, this.y + (this.size + topCurveHeight) / 2, this.x + this.size / 2, this.y + topCurveHeight);
+                ctx.bezierCurveTo(this.x + this.size / 2, this.y, this.x, this.y, this.x, this.y + topCurveHeight);
+                ctx.fill();
+                ctx.closePath();
+            }
+            update() {
+                this.y += this.speed * speedMultiplier;
+                if (this.y > height) {
+                    this.y = -50;
+                    this.x = Math.random() * width;
+                }
+            }
+        }
+
+        function initHearts() { for (let i = 0; i < 50; i++) hearts.push(new Heart()); }
+        function animateHearts() {
+            ctx.clearRect(0, 0, width, height);
+            hearts.forEach(heart => { heart.draw(); heart.update(); });
+            requestAnimationFrame(animateHearts);
+        }
+        initHearts();
+        animateHearts();
+    </script>
+</body>
+</html>
