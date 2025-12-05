@@ -14,8 +14,8 @@
 
         body {
             font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
-            background: #ffe6e6;
-            overflow: hidden;
+            background: #ffe6e6; /* 浪漫粉背景 */
+            overflow: hidden; /* 禁止滚动 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -23,6 +23,7 @@
             color: #4a4a4a;
         }
 
+        /* 背景爱心画布 */
         #heart-canvas {
             position: absolute;
             top: 0;
@@ -44,10 +45,13 @@
             max-width: 600px;
             width: 90%;
             text-align: center;
-            display: none;
+            display: none; /* 初始隐藏 */
             animation: fadeIn 1s ease;
+            max-height: 90vh; /* 防止内容太长溢出 */
+            overflow-y: auto; /* 内容过多可滚动 */
         }
 
+        /* 初始遮罩层 */
         .start-screen {
             position: fixed;
             top: 0;
@@ -70,6 +74,7 @@
             animation: pulse 1.5s infinite;
         }
 
+        /* 照片区域 */
         .photo-frame {
             width: 150px;
             height: 150px;
@@ -78,6 +83,7 @@
             border: 5px solid #ff6b6b;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            flex-shrink: 0;
         }
 
         .photo-frame img {
@@ -86,6 +92,7 @@
             object-fit: cover;
         }
 
+        /* 文字区域 */
         .content {
             margin-bottom: 20px;
         }
@@ -103,18 +110,29 @@
             min-height: 100px;
             text-align: left;
             margin-bottom: 20px;
-            white-space: pre-wrap;
+            white-space: pre-wrap; /* 保留换行 */
         }
 
-        /* --- 按钮区域优化 --- */
+        /* --- 按钮区域 (关键修改) --- */
         .buttons {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 40px; /* 增加间距，让两个按钮分开 */
+            gap: 40px;
             position: relative;
-            height: 60px; /* 固定高度，防止按钮飞走时布局塌陷 */
+            height: 60px;
             width: 100%;
+            
+            /* 默认隐藏，防止还没看完就点 */
+            opacity: 0;
+            pointer-events: none; 
+            transition: opacity 2s ease;
+        }
+
+        /* 显示按钮的类 */
+        .buttons.show {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .btn {
@@ -125,7 +143,7 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             outline: none;
-            white-space: nowrap; /* 防止文字换行 */
+            white-space: nowrap;
             z-index: 100;
         }
 
@@ -133,22 +151,20 @@
             background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
             color: white;
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-            /* 确保"我愿意"按钮在文档流中稳如泰山 */
-            position: relative; 
         }
 
         .btn-yes:active {
             transform: scale(0.95);
         }
 
-        /* 初始状态下，"再想想"按钮也是相对定位，与"我愿意"并排 */
         .btn-no {
             background: #e0e0e0;
             color: #666;
-            position: relative; 
-            transition: top 0.2s ease, left 0.2s ease; /* 平滑移动 */
+            position: relative; /* 初始相对定位 */
+            transition: top 0.2s ease, left 0.2s ease;
         }
 
+        /* 动画关键帧 */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -160,6 +176,7 @@
             100% { transform: scale(1); }
         }
 
+        /* 响应式调整 */
         @media (max-width: 480px) {
             .container { padding: 20px; }
             .love-letter { font-size: 1rem; }
@@ -170,22 +187,26 @@
 </head>
 <body>
 
+    <!-- 背景音乐 -->
     <audio id="bgm" loop>
-        <!-- 【请修改这里】 替换音乐文件 -->
+        <!-- 【请修改这里】放入你的音乐文件 bgm.mp3 -->
         <source src="./bgm.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- 初始点击屏幕 -->
     <div class="start-screen" id="startScreen" onclick="startProposal()">
         <h1>✨ 点击开启 ✨</h1>
-        <p style="color: white; margin-top: 10px; font-size: 0.8rem;">(戴上耳机体验更佳)</p>
     </div>
 
+    <!-- 背景 Canvas -->
     <canvas id="heart-canvas"></canvas>
 
+    <!-- 主内容卡片 -->
     <div class="container" id="mainContainer">
         <div class="photo-frame">
-            <!-- 【请修改这里】 替换照片 -->
-            <img src="./photo.jpg" alt="Photo" id="gf-photo">
+            <!-- 【请修改这里】放入她的照片 photo.jpg -->
+            <!-- 这里暂时用网图占位 -->
+            <img src="./photo.jpg" alt="Her Photo" id="gf-photo" onerror="this.src='https://api.dicebear.com/7.x/miniavs/svg?seed=Love'">
         </div>
 
         <div class="content">
@@ -202,8 +223,9 @@
     <script>
         // --- 配置区域 【请修改这里】 ---
         const config = {
-            startDate: "2024-04-10", 
-            loveLetter: `亲爱的婧婧：\n\n作为一个程序员，我习惯了用代码去解决问题。\n但遇到你之后，我发现爱是一个无法用逻辑闭环的死循环。\n\n如果有Bug，我愿用一辈子去Debug。\n如果内存溢出，那是因为装满了对你的喜欢。\n\n未来的日子，不管是此外还是彼端，\n我都想和你一起 commit 每一天的幸福。\n\n嫁给我好吗？`
+            startDate: "2024-04-10", // 在一起的日期
+            // 你的情书内容
+            loveLetter: `亲爱的宝宝：\n\n作为一个程序员，我习惯了用代码去解决问题。\n但遇到你之后，我发现爱是一个无法用逻辑闭环的死循环。\n\n如果有Bug，我愿用一辈子去Debug。\n如果内存溢出，那是因为装满了对你的喜欢。\n\n未来的日子，不管是此外还是彼端，\n我都想和你一起 commit 每一天的幸福。\n\n嫁给我好吗？`
         };
 
         // --- 逻辑代码 ---
@@ -213,6 +235,7 @@
             const mainContainer = document.getElementById('mainContainer');
             const bgm = document.getElementById('bgm');
 
+            // 尝试播放音乐
             bgm.play().catch(e => console.log("请添加背景音乐文件"));
 
             startScreen.style.opacity = '0';
@@ -220,10 +243,14 @@
                 startScreen.style.display = 'none';
                 mainContainer.style.display = 'block';
                 startTimer();
-                typeWriter(config.loveLetter, 'typewriter');
+                // 传入回调：字打完了再显示按钮
+                typeWriter(config.loveLetter, 'typewriter', 100, () => {
+                    document.querySelector('.buttons').classList.add('show');
+                });
             }, 800);
         }
 
+        // 计时器
         function startTimer() {
             const timerElem = document.getElementById('timer');
             const start = new Date(config.startDate).getTime();
@@ -238,56 +265,82 @@
             }, 1000);
         }
 
-        function typeWriter(text, elementId, speed = 100) {
+        // 打字机效果 (带回调)
+        function typeWriter(text, elementId, speed, callback) {
             let i = 0;
             const elem = document.getElementById(elementId);
             elem.innerHTML = "";
+            
             function type() {
                 if (i < text.length) {
                     elem.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
                     i++;
                     let delay = speed;
+                    // 标点符号停顿感
                     if (['，', '。', '！', '？', '\n'].includes(text.charAt(i-1))) delay += 200;
                     setTimeout(type, delay);
+                } else {
+                    if (callback) callback();
                 }
             }
             type();
         }
 
-        // 优化后的按钮移动逻辑
-        let isFirstMove = true; // 标记是否是第一次移动
-
+        // 按钮逃逸逻辑
+        let isFirstMove = true;
         function moveButton() {
             const btn = document.getElementById('btnNo');
-            
-            // 第一次触发时，将定位模式改为 fixed，这样它就可以飞出 buttons 容器了
-            // 同时保留 buttons 容器的高度，保证"我愿意"按钮不动
             if (isFirstMove) {
-                btn.style.position = 'fixed';
+                // 第一次触发时才变成 fixed，防止初始布局乱掉
+                btn.style.position = 'fixed'; 
                 isFirstMove = false;
             }
-
-            // 获取视口尺寸
+            
             const maxWidth = window.innerWidth - btn.offsetWidth - 20;
             const maxHeight = window.innerHeight - btn.offsetHeight - 20;
-
-            // 生成随机坐标
+            
             const randomX = Math.random() * maxWidth;
             const randomY = Math.random() * maxHeight;
 
-            // 应用新坐标
             btn.style.left = randomX + 'px';
             btn.style.top = randomY + 'px';
         }
 
+        // 我愿意逻辑
         function sheSaidYes() {
-            alert("💖 既然答应了，那就不能反悔咯！(系统已自动截图存档) 💖");
-            document.querySelector('.love-letter').innerHTML = "<h3>🎉 She Said YES! 🎉</h3><br>代码编译成功，程序正式上线！<br>版本号：Forever v1.0";
+            // 1. 隐藏拒绝按钮
             document.getElementById('btnNo').style.display = 'none';
-            speedMultiplier = 5;
+            
+            // 2. 改变我愿意按钮样式
+            const btnYes = document.querySelector('.btn-yes');
+            btnYes.innerText = "❤️ 爱你一万年 ❤️";
+            btnYes.style.transform = "scale(1.1)";
+            btnYes.onclick = null; // 禁止再次点击
+
+            // 3. 追加庆祝文字 (不覆盖情书)
+            const letterDiv = document.querySelector('.love-letter');
+            letterDiv.innerHTML += `
+                <br><br>
+                <div style="text-align: center; color: #ff6b6b; animation: fadeIn 1s;">
+                    <hr style="border:0; border-top:1px dashed #ff6b6b; margin: 20px 0;">
+                    <h3>🎉 She Said YES! 🎉</h3>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        代码编译成功，程序正式上线！<br>
+                        版本号：Forever v1.0
+                    </p>
+                </div>
+            `;
+            
+            // 4. 弹窗祝福
+            setTimeout(() => {
+                alert("💖 谢谢你让我成为世界上最幸福的程序员！ 💖");
+            }, 300);
+
+            // 5. 爱心雨加速
+            speedMultiplier = 6;
         }
 
-        // --- Canvas 爱心雨 (保持不变) ---
+        // --- Canvas 爱心雨背景 ---
         const canvas = document.getElementById('heart-canvas');
         const ctx = canvas.getContext('2d');
         let width, height;
@@ -330,7 +383,7 @@
             }
         }
 
-        function initHearts() { for (let i = 0; i < 50; i++) hearts.push(new Heart()); }
+        function initHearts() { for (let i = 0; i < 60; i++) hearts.push(new Heart()); }
         function animateHearts() {
             ctx.clearRect(0, 0, width, height);
             hearts.forEach(heart => { heart.draw(); heart.update(); });
